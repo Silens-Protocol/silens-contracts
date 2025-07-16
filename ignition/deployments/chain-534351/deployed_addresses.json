@@ -1,0 +1,7 @@
+{
+  "SilensModule#SilensIdentity": "0x87BE019A88fC21e60902453b93f19cc41A81a46F",
+  "SilensModule#SilensModelRegistry": "0x3200D5861a8bA6874e81f1B2A03661bBCA1e6665",
+  "SilensModule#SilensReputationSystem": "0xAd6dFe534f3bE9221ceaE8bCD929CCa052D48a6B",
+  "SilensModule#SilensProposalVoting": "0x8660466fd7683A84cB163e78B73c37846477AC68",
+  "SilensModule#SilensCore": "0xd20b657d51174d1B374E43A9C1CB78875349BE09"
+}

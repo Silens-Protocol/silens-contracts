@@ -24,6 +24,7 @@ export default buildModule("SilensModule", (m) => {
   
   m.call(modelRegistry, "transferOwnership", [proposalVoting]);
   m.call(reputationSystem, "transferOwnership", [modelRegistry]);
+  m.call(proposalVoting, "transferOwnership", [silensCore]);
   
   return {
     modelRegistry,

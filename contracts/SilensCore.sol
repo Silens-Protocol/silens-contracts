@@ -2,17 +2,17 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./SilensModelRegistry.sol";
-import "./SilensReputationSystem.sol";
-import "./SilensProposalVoting.sol";
-import "./SilensIdentity.sol";
+import "./SilensModel.sol";
+import "./SilensReputation.sol";
+import "./SilensProposal.sol";
+import "./SilensIdentityRegistry.sol";
 
 // ==================== SilensCore Contract ====================
-contract SilensCore is Ownable {
-    SilensModelRegistry public modelRegistry;
-    SilensReputationSystem public reputationSystem;
-    SilensProposalVoting public proposalVoting;
-    SilensIdentity public identitySystem;
+contract Silens is Ownable {
+    SilensModel public modelRegistry;
+    SilensReputation public reputationSystem;
+    SilensProposal public proposalVoting;
+    SilensIdentityRegistry public identitySystem;
     
     mapping(uint256 => uint256) public modelToProposal;
     
@@ -25,21 +25,21 @@ contract SilensCore is Ownable {
         address _proposalVoting,
         address _identitySystem
     ) Ownable(msg.sender) {
-        modelRegistry = SilensModelRegistry(_modelRegistry);
-        reputationSystem = SilensReputationSystem(_reputationSystem);
-        proposalVoting = SilensProposalVoting(_proposalVoting);
-        identitySystem = SilensIdentity(_identitySystem);
+        modelRegistry = SilensModel(_modelRegistry);
+        reputationSystem = SilensReputation(_reputationSystem);
+        proposalVoting = SilensProposal(_proposalVoting);
+        identitySystem = SilensIdentityRegistry(_identitySystem);
         
         emit SystemInitialized(_modelRegistry, _reputationSystem, _proposalVoting, _identitySystem);
     }
     
     function checkAndCreateProposal(uint256 _modelId) external {
-        SilensModelRegistry.Model memory model = modelRegistry.getModel(_modelId);
+        SilensModel.Model memory model = modelRegistry.getModel(_modelId);
         require(model.id != 0, "Model does not exist");
         require(block.timestamp > model.reviewEndTime, "Review period not ended");
         require(modelToProposal[_modelId] == 0, "Proposal already exists");
         
-        SilensModelRegistry.Review[] memory reviews = modelRegistry.getModelReviews(_modelId);
+        SilensModel.Review[] memory reviews = modelRegistry.getModelReviews(_modelId);
         uint256 totalSeverity = 0;
         uint256 criticalCount = 0;
         
@@ -50,19 +50,19 @@ contract SilensCore is Ownable {
             }
         }
         
-        SilensProposalVoting.ProposalType proposalType;
+        SilensProposal.ProposalType proposalType;
         
         if (reviews.length == 0 || totalSeverity == 0) {
-            proposalType = SilensProposalVoting.ProposalType.APPROVE;
+            proposalType = SilensProposal.ProposalType.APPROVE;
         } else {
             uint256 avgSeverity = totalSeverity / reviews.length;
             
             if (criticalCount >= 3 || avgSeverity >= 4) {
-                proposalType = SilensProposalVoting.ProposalType.DELIST;
+                proposalType = SilensProposal.ProposalType.DELIST;
             } else if (avgSeverity >= 3) {
-                proposalType = SilensProposalVoting.ProposalType.FLAG;
+                proposalType = SilensProposal.ProposalType.FLAG;
             } else {
-                proposalType = SilensProposalVoting.ProposalType.APPROVE;
+                proposalType = SilensProposal.ProposalType.APPROVE;
             }
         }
         
@@ -73,19 +73,19 @@ contract SilensCore is Ownable {
     }
     
     function updateModelRegistry(address _newRegistry) external onlyOwner {
-        modelRegistry = SilensModelRegistry(_newRegistry);
+        modelRegistry = SilensModel(_newRegistry);
     }
     
     function updateReputationSystem(address _newSystem) external onlyOwner {
-        reputationSystem = SilensReputationSystem(_newSystem);
+        reputationSystem = SilensReputation(_newSystem);
     }
     
     function updateProposalVoting(address _newVoting) external onlyOwner {
-        proposalVoting = SilensProposalVoting(_newVoting);
+        proposalVoting = SilensProposal(_newVoting);
     }
     
     function updateIdentitySystem(address _newIdentity) external onlyOwner {
-        identitySystem = SilensIdentity(_newIdentity);
+        identitySystem = SilensIdentityRegistry(_newIdentity);
     }
     
     /**

@@ -1,7 +1,7 @@
 {
-  "SilensModule#SilensIdentity": "0x87BE019A88fC21e60902453b93f19cc41A81a46F",
-  "SilensModule#SilensModelRegistry": "0x3200D5861a8bA6874e81f1B2A03661bBCA1e6665",
-  "SilensModule#SilensReputationSystem": "0xAd6dFe534f3bE9221ceaE8bCD929CCa052D48a6B",
-  "SilensModule#SilensProposalVoting": "0x8660466fd7683A84cB163e78B73c37846477AC68",
-  "SilensModule#SilensCore": "0xd20b657d51174d1B374E43A9C1CB78875349BE09"
+  "SilensModule#SilensIdentityRegistry": "0x7b74155177aDe9cCe1a8AaF02D9942eA71809af4",
+  "SilensModule#SilensModel": "0x02e4F622509642351e6767F6D487d999a7ae8E55",
+  "SilensModule#SilensReputation": "0xE743218b205916e0c0c027dA3Cc1366284514621",
+  "SilensModule#SilensProposal": "0xdB8C1Cb80A28eC7fC7Eb65e861b016d82686B626",
+  "SilensModule#Silens": "0x4fDf383C1eB910893583398AFa61B497860C670C"
 }

@@ -1,16 +1,16 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
 export default buildModule("SilensModule", (m) => {
-  const modelRegistry = m.contract("SilensModelRegistry");
-  const reputationSystem = m.contract("SilensReputationSystem");
-  const silensIdentity = m.contract("SilensIdentity");
+  const modelRegistry = m.contract("SilensModel");
+  const reputationSystem = m.contract("SilensReputation");
+  const silensIdentity = m.contract("SilensIdentityRegistry");
   
-  const proposalVoting = m.contract("SilensProposalVoting", [
+  const proposalVoting = m.contract("SilensProposal", [
     reputationSystem,
     modelRegistry
   ]);
   
-  const silensCore = m.contract("SilensCore", [
+  const silensCore = m.contract("Silens", [
     modelRegistry,
     reputationSystem,
     proposalVoting,
@@ -22,7 +22,8 @@ export default buildModule("SilensModule", (m) => {
   m.call(proposalVoting, "setIdentitySystem", [silensIdentity]);
   m.call(reputationSystem, "setIdentitySystem", [silensIdentity]);
   
-  m.call(modelRegistry, "transferOwnership", [silensCore]);
+  m.call(modelRegistry, "transferOwnership", [proposalVoting]);
+  m.call(reputationSystem, "transferOwnership", [modelRegistry]);
   
   return {
     modelRegistry,

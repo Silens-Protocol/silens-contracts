@@ -2,17 +2,17 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./SilensModel.sol";
-import "./SilensReputation.sol";
-import "./SilensProposal.sol";
-import "./SilensIdentityRegistry.sol";
+import "./ModelRegistry.sol";
+import "./ReputationSystem.sol";
+import "./VotingProposal.sol";
+import "./IdentityRegistry.sol";
 
 // ==================== SilensCore Contract ====================
 contract Silens is Ownable {
-    SilensModel public modelRegistry;
-    SilensReputation public reputationSystem;
-    SilensProposal public proposalVoting;
-    SilensIdentityRegistry public identitySystem;
+    ModelRegistry public modelRegistry;
+    ReputationSystem public reputationSystem;
+    VotingProposal public proposalVoting;
+    IdentityRegistry public identitySystem;
     
     mapping(uint256 => uint256) public modelToProposal;
     
@@ -25,44 +25,53 @@ contract Silens is Ownable {
         address _proposalVoting,
         address _identitySystem
     ) Ownable(msg.sender) {
-        modelRegistry = SilensModel(_modelRegistry);
-        reputationSystem = SilensReputation(_reputationSystem);
-        proposalVoting = SilensProposal(_proposalVoting);
-        identitySystem = SilensIdentityRegistry(_identitySystem);
+        modelRegistry = ModelRegistry(_modelRegistry);
+        reputationSystem = ReputationSystem(_reputationSystem);
+        proposalVoting = VotingProposal(_proposalVoting);
+        identitySystem = IdentityRegistry(_identitySystem);
         
         emit SystemInitialized(_modelRegistry, _reputationSystem, _proposalVoting, _identitySystem);
     }
     
     function checkAndCreateProposal(uint256 _modelId) external {
-        SilensModel.Model memory model = modelRegistry.getModel(_modelId);
+        ModelRegistry.Model memory model = modelRegistry.getModel(_modelId);
         require(model.id != 0, "Model does not exist");
         require(block.timestamp > model.reviewEndTime, "Review period not ended");
         require(modelToProposal[_modelId] == 0, "Proposal already exists");
         
-        SilensModel.Review[] memory reviews = modelRegistry.getModelReviews(_modelId);
+        ModelRegistry.Review[] memory reviews = modelRegistry.getModelReviews(_modelId);
         uint256 totalSeverity = 0;
         uint256 criticalCount = 0;
+        uint256 positiveReviews = 0;
+        uint256 negativeReviews = 0;
         
         for (uint i = 0; i < reviews.length; i++) {
-            totalSeverity += reviews[i].severity;
-            if (reviews[i].severity >= 4) {
-                criticalCount++;
+            if (reviews[i].reviewType == ModelRegistry.ReviewType.NEGATIVE) {
+                totalSeverity += reviews[i].severity;
+                if (reviews[i].severity >= 4) {
+                    criticalCount++;
+                }
+                negativeReviews++;
+            } else {
+                positiveReviews++;
             }
         }
         
-        SilensProposal.ProposalType proposalType;
+        VotingProposal.ProposalType proposalType;
         
-        if (reviews.length == 0 || totalSeverity == 0) {
-            proposalType = SilensProposal.ProposalType.APPROVE;
+        if (reviews.length == 0) {
+            proposalType = VotingProposal.ProposalType.APPROVE;
+        } else if (negativeReviews == 0) {
+            proposalType = VotingProposal.ProposalType.APPROVE;
         } else {
-            uint256 avgSeverity = totalSeverity / reviews.length;
+            uint256 avgSeverity = totalSeverity / negativeReviews;
             
             if (criticalCount >= 3 || avgSeverity >= 4) {
-                proposalType = SilensProposal.ProposalType.DELIST;
+                proposalType = VotingProposal.ProposalType.DELIST;
             } else if (avgSeverity >= 3) {
-                proposalType = SilensProposal.ProposalType.FLAG;
+                proposalType = VotingProposal.ProposalType.FLAG;
             } else {
-                proposalType = SilensProposal.ProposalType.APPROVE;
+                proposalType = VotingProposal.ProposalType.APPROVE;
             }
         }
         
@@ -73,19 +82,19 @@ contract Silens is Ownable {
     }
     
     function updateModelRegistry(address _newRegistry) external onlyOwner {
-        modelRegistry = SilensModel(_newRegistry);
+        modelRegistry = ModelRegistry(_newRegistry);
     }
     
     function updateReputationSystem(address _newSystem) external onlyOwner {
-        reputationSystem = SilensReputation(_newSystem);
+        reputationSystem = ReputationSystem(_newSystem);
     }
     
     function updateProposalVoting(address _newVoting) external onlyOwner {
-        proposalVoting = SilensProposal(_newVoting);
+        proposalVoting = VotingProposal(_newVoting);
     }
     
     function updateIdentitySystem(address _newIdentity) external onlyOwner {
-        identitySystem = SilensIdentityRegistry(_newIdentity);
+        identitySystem = IdentityRegistry(_newIdentity);
     }
     
     /**

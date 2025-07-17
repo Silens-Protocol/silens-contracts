@@ -4,10 +4,10 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
-import "./SilensIdentityRegistry.sol";
+import "./IdentityRegistry.sol";
 
 // ==================== ReputationSystem Contract ====================
-contract SilensReputation is ERC1155Supply, Ownable {
+contract ReputationSystem is ERC1155Supply, Ownable {
     // Badge IDs
     uint256 public constant VERIFIED_REVIEWER = 1;
     uint256 public constant TRUSTED_REVIEWER = 2;
@@ -17,7 +17,8 @@ contract SilensReputation is ERC1155Supply, Ownable {
     
     uint256 public constant SUBMIT_POINTS = 5;
     
-    SilensIdentityRegistry public identitySystem;
+    IdentityRegistry public identitySystem;
+    address public modelRegistry;
     
     event ReputationUpdated(address indexed user, uint256 newScore, uint256 pointsAdded, string reason);
     event BadgeAwarded(address indexed user, uint256 indexed badgeId, string badgeName, uint256 timestamp);
@@ -25,17 +26,23 @@ contract SilensReputation is ERC1155Supply, Ownable {
     constructor() ERC1155("https://silens-api.up.railway.app/badges/{id}.json") Ownable(msg.sender) {}
     
     function setIdentitySystem(address _identitySystem) external onlyOwner {
-        identitySystem = SilensIdentityRegistry(_identitySystem);
+        identitySystem = IdentityRegistry(_identitySystem);
     }
     
-    function awardModelSubmissionPoints(address _submitter) external onlyOwner {
+    function setModelRegistry(address _modelRegistry) external onlyOwner {
+        modelRegistry = _modelRegistry;
+    }
+    
+    function awardModelSubmissionPoints(address _submitter) external {
+        require(msg.sender == modelRegistry, "Only ModelRegistry can award model submission points");
         reputationScores[_submitter] += SUBMIT_POINTS;
         emit ReputationUpdated(_submitter, reputationScores[_submitter], SUBMIT_POINTS, "Model Submission");
         
         _checkAndAwardBadges(_submitter);
     }
 
-    function awardReviewPoints(address _reviewer) external onlyOwner {
+    function awardReviewPoints(address _reviewer) external {
+        require(msg.sender == modelRegistry, "Only ModelRegistry can award review points");
         reputationScores[_reviewer] += SUBMIT_POINTS;
         emit ReputationUpdated(_reviewer, reputationScores[_reviewer], SUBMIT_POINTS, "Review");
         
@@ -54,22 +61,15 @@ contract SilensReputation is ERC1155Supply, Ownable {
         }
     }
         
-    function addReputation(address _user, uint256 _points) external onlyOwner {
-        reputationScores[_user] += _points;
-        emit ReputationUpdated(_user, reputationScores[_user], _points, "Manual Addition");
-        
-        _checkAndAwardBadges(_user);
-    }
-    
     function _checkAndAwardBadges(address _user) private {
         uint256 score = reputationScores[_user];
         
-        if (score >= 50 && balanceOf(_user, TRUSTED_REVIEWER) == 0) {
+        if (score >= 30 && balanceOf(_user, TRUSTED_REVIEWER) == 0) {
             _mint(_user, TRUSTED_REVIEWER, 1, "");
             emit BadgeAwarded(_user, TRUSTED_REVIEWER, "Trusted Reviewer", block.timestamp);
         }
         
-        if (score >= 100 && balanceOf(_user, GOVERNANCE_VOTER) == 0) {
+        if (score >= 50 && balanceOf(_user, GOVERNANCE_VOTER) == 0) {
             _mint(_user, GOVERNANCE_VOTER, 1, "");
             emit BadgeAwarded(_user, GOVERNANCE_VOTER, "Governance Voter", block.timestamp);
         }
@@ -77,6 +77,18 @@ contract SilensReputation is ERC1155Supply, Ownable {
     
     function hasRole(address _user, uint256 _roleId) external view returns (bool) {
         return balanceOf(_user, _roleId) > 0;
+    }
+    
+    /**
+     * @dev DEMO FUNCTION - Open to everyone for hackathon/demo purposes only!
+     * This function allows anyone to become a Governance Voter for demonstration.
+     * In production, this would be restricted and require proper reputation accumulation.
+     * @param _user The address to award the Governance Voter badge to
+     */
+    function setGovernanceVoter(address _user) external {
+        require(balanceOf(_user, GOVERNANCE_VOTER) == 0, "User already has Governance Voter badge");
+        _mint(_user, GOVERNANCE_VOTER, 1, "");
+        emit BadgeAwarded(_user, GOVERNANCE_VOTER, "Governance Voter", block.timestamp);
     }
     
     // Prevent badge transfers (soulbound)

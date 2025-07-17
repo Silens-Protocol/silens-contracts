@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
-contract SilensIdentityRegistry is ERC721, Ownable {
+contract IdentityRegistry is ERC721, Ownable {
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
 

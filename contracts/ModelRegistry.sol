@@ -5,27 +5,33 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "./SilensReputation.sol";
-import "./SilensIdentityRegistry.sol";
+import "./ReputationSystem.sol";
+import "./IdentityRegistry.sol";
 
 // ==================== ModelRegistry Contract ====================
-contract SilensModel is Ownable, ReentrancyGuard {
+contract ModelRegistry is Ownable, ReentrancyGuard {
     uint256 private _modelIdCounter;
     
-    SilensReputation public reputationSystem;
-    SilensIdentityRegistry public identitySystem;
+    ReputationSystem public reputationSystem;
+    IdentityRegistry public identitySystem;
+    address public proposalContract;
     
     constructor() Ownable(msg.sender) {}
     
     function setReputationSystem(address _reputationSystem) external onlyOwner {
-        reputationSystem = SilensReputation(_reputationSystem);
+        reputationSystem = ReputationSystem(_reputationSystem);
     }
     
     function setIdentitySystem(address _identitySystem) external onlyOwner {
-        identitySystem = SilensIdentityRegistry(_identitySystem);
+        identitySystem = IdentityRegistry(_identitySystem);
+    }
+    
+    function setProposalContract(address _proposalContract) external onlyOwner {
+        proposalContract = _proposalContract;
     }
     
     enum ModelStatus { UNDER_REVIEW, APPROVED, FLAGGED, DELISTED }
+    enum ReviewType { POSITIVE, NEGATIVE }
     
     struct Model {
         uint256 id;
@@ -41,7 +47,8 @@ contract SilensModel is Ownable, ReentrancyGuard {
     struct Review {
         address reviewer;
         string ipfsHash;
-        uint8 severity; // 1-5 (low to critical)
+        ReviewType reviewType;
+        uint8 severity; // 1-5 (low to critical) - only for NEGATIVE reviews
         uint256 timestamp;
     }
     
@@ -52,7 +59,7 @@ contract SilensModel is Ownable, ReentrancyGuard {
     uint256 public reviewPeriod = 5 minutes; // demo
     
     event ModelSubmitted(uint256 indexed modelId, address indexed submitter, string ipfsHash, uint8 status, uint256 submissionTime, uint256 reviewEndTime);
-    event ReviewSubmitted(uint256 indexed modelId, address indexed reviewer, string ipfsHash, uint8 severity, uint256 timestamp);
+    event ReviewSubmitted(uint256 indexed modelId, address indexed reviewer, string ipfsHash, uint8 reviewType, uint8 severity, uint256 timestamp);
     event ModelStatusUpdated(uint256 indexed modelId, uint8 newStatus);
     
     function submitModel(
@@ -85,17 +92,24 @@ contract SilensModel is Ownable, ReentrancyGuard {
     function submitReview(
         uint256 _modelId,
         string memory _ipfsHash,
+        ReviewType _reviewType,
         uint8 _severity
     ) external {
         require(identitySystem.hasIdentity(msg.sender), "Must have verified identity");
         require(models[_modelId].id != 0, "Model does not exist");
         require(block.timestamp <= models[_modelId].reviewEndTime, "Review period ended");
         require(!hasReviewed[_modelId][msg.sender], "Already reviewed");
-        require(_severity >= 1 && _severity <= 5, "Invalid severity");
+        
+        if (_reviewType == ReviewType.NEGATIVE) {
+            require(_severity >= 1 && _severity <= 5, "Invalid severity for negative review");
+        } else {
+            require(_severity == 0, "Severity should be 0 for positive reviews");
+        }
         
         Review memory newReview = Review({
             reviewer: msg.sender,
             ipfsHash: _ipfsHash,
+            reviewType: _reviewType,
             severity: _severity,
             timestamp: block.timestamp
         });
@@ -107,11 +121,12 @@ contract SilensModel is Ownable, ReentrancyGuard {
             reputationSystem.awardReviewPoints(msg.sender);
         }
         
-        emit ReviewSubmitted(_modelId, msg.sender, _ipfsHash, _severity, block.timestamp);
+        emit ReviewSubmitted(_modelId, msg.sender, _ipfsHash, uint8(_reviewType), _severity, block.timestamp);
     }
     
-    function updateModelStatus(uint256 _modelId, ModelStatus _status) external onlyOwner {
+    function updateModelStatus(uint256 _modelId, ModelStatus _status) external {
         require(models[_modelId].id != 0, "Model does not exist");
+        require(msg.sender == proposalContract, "Only SilensProposal can update model status");
         models[_modelId].status = _status;
         emit ModelStatusUpdated(_modelId, uint8(_status));
     }

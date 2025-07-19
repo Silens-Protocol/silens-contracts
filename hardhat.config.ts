@@ -1,9 +1,9 @@
 import { HardhatUserConfig, task, vars } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-contract-sizer";
+import "@nomicfoundation/hardhat-verify";
 
 const PRIVATE_KEY = vars.get("PRIVATE_KEY");
-const SCROLLSCAN_API_KEY = vars.get("SCROLLSCAN_API_KEY");
 const ETHERSCAN_API_KEY = vars.get("ETHERSCAN_API_KEY");
 
 const config: HardhatUserConfig = {
@@ -29,12 +29,14 @@ const config: HardhatUserConfig = {
       url: "https://rpc.sepolia.org",
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
     },
+    bnbTestnet: {
+      url: "https://data-seed-prebsc-1-s1.bnbchain.org:8545",
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+      chainId: 97,
+    }
   },
   etherscan: {
-    apiKey: {
-      scrollSepolia: SCROLLSCAN_API_KEY,
-      sepolia: ETHERSCAN_API_KEY,
-    },
+    apiKey: ETHERSCAN_API_KEY,
     customChains: [
       {
         network: "scrollSepolia",
@@ -44,6 +46,14 @@ const config: HardhatUserConfig = {
           browserURL: "https://sepolia.scrollscan.com/",
         },
       },
+      {
+        network: "bscTestnet",
+        chainId: 97,
+        urls: {
+          apiURL: "https://api-testnet.bscscan.com/api",
+          browserURL: "https://testnet.bscscan.com",
+        },
+      }
     ],
   },
   contractSizer: {

@@ -151,3 +151,32 @@ silens-contracts/
 4. **Add proper access controls** for governance functions
 5. **Test thoroughly** with realistic scenarios
 6. **Audit contracts** before mainnet deployment
+
+## 🚀 Smart Contract Deployment
+
+### **BSC Testnet Deployment**
+
+The Silens smart contracts have been deployed on BSC Testnet (Chain ID: 97).
+
+#### **Contract Addresses**
+
+| Contract | Address | Explorer |
+|----------|---------|----------|
+| **Silens** (Main Orchestrator) | `0xCA18A11ca8e44c9eef603242Ef3cc92EE8BE12C2` | [View on BSCScan](https://testnet.bscscan.com/address/0xCA18A11ca8e44c9eef603242Ef3cc92EE8BE12C2) |
+| **IdentityRegistry** | `0x5EF386D8aF3b1709C4Ca0404A27E80B2d1206e38` | [View on BSCScan](https://testnet.bscscan.com/address/0x5EF386D8aF3b1709C4Ca0404A27E80B2d1206e38) |
+| **ModelRegistry** | `0xEFEE9654334eE89A25021903B01AD840C7494dE2` | [View on BSCScan](https://testnet.bscscan.com/address/0xEFEE9654334eE89A25021903B01AD840C7494dE2) |
+| **ReputationSystem** | `0x8C0028B38c492A2F991dD805093C6712344D012F` | [View on BSCScan](https://testnet.bscscan.com/address/0x8C0028B38c492A2F991dD805093C6712344D012F) |
+| **VotingProposal** | `0x0e6c055996E02b129B8b4d7cCE9210997e408c7E` | [View on BSCScan](https://testnet.bscscan.com/address/0x0e6c055996E02b129B8b4d7cCE9210997e408c7E) |
+
+#### **Network Information**
+- **Network**: BSC Testnet
+- **Chain ID**: 97
+- **RPC URL**: `https://data-seed-prebsc-1-s1.binance.org:8545/`
+- **Block Explorer**: [BSCScan Testnet](https://testnet.bscscan.com/)
+
+#### **Deployment Details**
+- **Deployment Date**: July 2025
+- **Deployment Method**: Hardhat + Ignition
+- **Gas Used**: Optimized for BSC Testnet
+- **Verification Status**: All contracts verified on BSCScan Testnet
+
